@@ -1,4 +1,4 @@
-Here’s the **single-block README.md** for easy copy-pasting:
+
 
 ```markdown
 # Resume Parser & Job Matcher
