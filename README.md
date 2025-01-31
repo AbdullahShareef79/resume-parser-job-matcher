@@ -120,6 +120,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 Abdullah Shareef  
-abdullah@example.com  
-[Project Link](https://github.com/AbdullahShareef79/resume-parser-job-matcher)
+abdullahshareef7945512@gmail.com
+(https://github.com/AbdullahShareef79/resume-parser-job-matcher)
 
