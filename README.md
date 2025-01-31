@@ -1,6 +1,3 @@
-
-
-```markdown
 # Resume Parser & Job Matcher
 
 An intelligent system that parses resumes, extracts key information, and matches candidates with relevant job opportunities using semantic similarity.
@@ -34,7 +31,7 @@ python -m spacy download en_core_web_trf
 python -m nltk.downloader punkt wordnet stopwords
 ```
 
-3. Download ESCO skills dataset and place in `data/` directory:
+3. Download ESCO skills dataset and place it in the `data/` directory:
 ```bash
 wget -P data/ https://esco.ec.europa.eu/sites/default/files/esco_skills.csv
 ```
@@ -47,8 +44,8 @@ python -m backend.main
 ```
 
 The API will be available at:
-- Documentation: http://localhost:8000/docs
-- Endpoint: http://localhost:8000/upload
+- Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Endpoint: [http://localhost:8000/upload](http://localhost:8000/upload)
 
 ### Example API Request:
 ```bash
@@ -79,7 +76,7 @@ resume-parser-job-matcher/
 ## API Documentation
 
 ### POST /upload/
-Upload a resume file (PDF/DOCX) and get parsed data with job matches
+Upload a resume file (PDF/DOCX) and get parsed data with job matches.
 
 **Parameters:**
 - `file`: Resume file to upload
@@ -97,8 +94,7 @@ Upload a resume file (PDF/DOCX) and get parsed data with job matches
     {
       "title": "Software Engineer",
       "company": "Tech Corp",
-      "similarity_score": 0.95,
-      ...
+      "similarity_score": 0.95
     }
   ]
 }
@@ -126,14 +122,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Abdullah Shareef  
 abdullah@example.com  
 [Project Link](https://github.com/AbdullahShareef79/resume-parser-job-matcher)
-```
 
----
-
-### How to Use:
-1. Copy the entire block above.
-2. Create a new file named `README.md` in the root of your project.
-3. Paste the content into the file.
-4. Save the file and commit it to your repository.
-
-This version is formatted as a single block for easy copy-pasting. Let me know if you need further adjustments! 🚀
