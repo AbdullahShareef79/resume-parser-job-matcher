@@ -1,0 +1,48 @@
+# Ignore virtual environment
+.venv/
+venv/
+
+# Byte-compiled / cached files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore VS Code settings
+.vscode/
+.vscode/settings.json
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and debug files
+*.log
+*.out
+*.err
+logs/
+
+# Ignore environment variables and secrets
+.env
+*.env
+
+# Ignore OS-specific files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+
+# Ignore dependency and package metadata
+Pipfile
+Pipfile.lock
+poetry.lock
+
+# Ignore compiled C extensions
+*.so
+
+# Ignore mypy type checking cache
+.mypy_cache/
+
+# Ignore testing and coverage reports
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.pycover
+.hypothesis/
