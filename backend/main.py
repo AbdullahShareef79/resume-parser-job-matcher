@@ -55,6 +55,10 @@ async def upload_resume(file: UploadFile = File(...)):
         # **4. Rank jobs based on resume skills**
         ranked_jobs = rank_jobs(resume_skills_text, JOB_LISTINGS) if resume_skills_text else []
 
+        # Print parsed data and ranked jobs for debugging purposes
+        print("Parsed Data:", parsed_data)
+        print("Ranked Jobs:", ranked_jobs)
+
         return {
             "filename": file.filename,
             "parsed_data": parsed_data,
