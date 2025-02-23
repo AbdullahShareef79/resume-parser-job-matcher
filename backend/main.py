@@ -1,18 +1,20 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import HTMLResponse
 import shutil
 import os
-from resume_parser import parse_resume
-from job_matcher import rank_jobs
+from backend.resume_parser import parse_resume
+from backend.job_matcher import rank_jobs
 
 app = FastAPI()
 
-# Root route
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the Resume Parser and Job Matcher API!"}
-
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Serve the HTML page from the frontend folder
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    with open("D:/UNI TRIER FILES/My Projects/CV Parser/resume-parser-job-matcher/frontend/index.html", "r") as file:
+        return HTMLResponse(content=file.read())
 
 JOB_LISTINGS = [
     {
@@ -38,16 +40,20 @@ JOB_LISTINGS = [
 @app.post("/upload/")
 async def upload_resume(file: UploadFile = File(...)):
     try:
-        # ... (existing code to save the file)
+        # **1. Save the uploaded file**
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-        # Parse the resume
+        # **2. Parse the resume**
         parsed_data = parse_resume(file_path)
 
-        # Join the list of skills into a single string
-        resume_skills_text = " ".join(parsed_data["skills"])  # <-- Fix here
+        # **3. Handle empty skills list**
+        skills_list = parsed_data.get("skills", [])
+        resume_skills_text = " ".join(skills_list) if skills_list else ""
 
-        # Rank jobs based on the resume skills
-        ranked_jobs = rank_jobs(resume_skills_text, JOB_LISTINGS)  # <-- Pass the string
+        # **4. Rank jobs based on resume skills**
+        ranked_jobs = rank_jobs(resume_skills_text, JOB_LISTINGS) if resume_skills_text else []
 
         return {
             "filename": file.filename,

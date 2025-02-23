@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Parser and Job Matcher</title>
+</head>
+<body>
+    <h1>Upload Your Resume</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="resumeFile" name="file" required />
+        <button type="submit">Upload Resume</button>
+    </form>
+
+    <h2>Parsed Data</h2>
+    <pre id="parsedData"></pre>
+
+    <h2>Matched Jobs</h2>
+    <ul id="matchedJobs"></ul>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            
+            const formData = new FormData();
+            formData.append("file", document.getElementById("resumeFile").files[0]);
+
+            const response = await fetch("/upload/", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById("parsedData").textContent = JSON.stringify(data.parsed_data, null, 2);
+
+                const jobsList = data.matched_jobs.map(job => `<li>${job.title} - ${job.company}</li>`).join('');
+                document.getElementById("matchedJobs").innerHTML = jobsList;
+            } else {
+                alert("Failed to upload resume");
+            }
+        });
+    </script>
+</body>
+</html>
