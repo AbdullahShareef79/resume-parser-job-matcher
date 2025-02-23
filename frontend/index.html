@@ -4,74 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Parser and Job Matcher</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f7fc;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .container {
-            padding: 20px;
-        }
-        .form-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-        input[type="file"] {
-            padding: 10px;
-            font-size: 16px;
-            width: 100%;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #parsedData, #matchedJobs {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            background-color: #f1f1f1;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 4px;
-        }
-        li:hover {
-            background-color: #e2e2e2;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
@@ -84,49 +17,35 @@
         <h2>Upload Your Resume</h2>
         <form id="uploadForm" enctype="multipart/form-data">
             <input type="file" id="resumeFile" name="file" accept=".pdf,.docx" required />
-            <button type="submit">Upload Resume</button>
+            <button type="submit" id="submitBtn">Upload Resume</button>
+            <div id="loading" class="loading" style="display: none;"></div>
+            <div id="errorMessage" class="error-message"></div>
         </form>
     </div>
 
     <div class="result-container">
-        <h2>Parsed Data</h2>
-        <pre id="parsedData">Your parsed resume data will appear here...</pre>
+        <div>
+            <h2>Parsed Data</h2>
+            <pre id="parsedData">Your parsed resume data will appear here...</pre>
+        </div>
 
-        <h2>Matched Jobs</h2>
-        <ul id="matchedJobs">
-            <li>Your matched jobs will appear here...</li>
-        </ul>
+        <div>
+            <h2>Matched Jobs</h2>
+            <ul id="matchedJobs">
+                <li class="job-card">
+                    <h3>Job Title</h3>
+                    <p><strong>Company:</strong> Company Name</p>
+                    <p><strong>Location:</strong> Job Location</p>
+                    <div class="details">
+                        <p><strong>Description:</strong> Job description goes here...</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 
-<script>
-    document.getElementById("uploadForm").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        
-        const formData = new FormData();
-        formData.append("file", document.getElementById("resumeFile").files[0]);
-
-        const response = await fetch("/upload/", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-
-            // Display parsed data
-            document.getElementById("parsedData").textContent = JSON.stringify(data.parsed_data, null, 2);
-
-            // Display matched jobs
-            const jobsList = data.matched_jobs.map(job => 
-                `<li><strong>${job.title}</strong> - ${job.company} <br> <em>Location:</em> ${job.location} <br> <em>Description:</em> ${job.description}</li>`
-            ).join('');
-            document.getElementById("matchedJobs").innerHTML = jobsList;
-        } else {
-            alert("Failed to upload resume. Please try again.");
-        }
-    });
-</script>
+<script src="/static/scripts.js"></script>
 
 </body>
 </html>
