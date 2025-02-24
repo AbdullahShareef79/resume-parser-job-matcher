@@ -1,4 +1,17 @@
-# Ignore virtual environment
+# Ignore uploaded files
+uploads/
+
+# Ignore documentation and sensitive data
+docs/
+*.csv
+*.json
+*.yaml
+*.yml
+*.xml
+*.ini
+*.config
+
+# Ignore virtual environments
 .venv/
 venv/
 
