@@ -24,23 +24,30 @@ git clone https://github.com/AbdullahShareef79/resume-parser-job-matcher.git
 cd resume-parser-job-matcher
 ```
 
-2. Install dependencies:
+2. Create a virtual environment and activate it:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_trf
 python -m nltk.downloader punkt wordnet stopwords
 ```
 
-3. Download ESCO skills dataset and place it in the `data/` directory:
+4. Download ESCO skills dataset and place it in the `data/` directory:
 ```bash
-wget -P data/ https://esco.ec.europa.eu/sites/default/files/esco_skills.csv
+mkdir -p data
+wget -O data/esco_skills.csv https://esco.ec.europa.eu/sites/default/files/esco_skills.csv
 ```
 
 ## Usage
 
 ### Run the API server:
 ```bash
-python -m backend.main
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The API will be available at:
@@ -63,13 +70,15 @@ resume-parser-job-matcher/
 │   ├── main.py              # FastAPI server and routes
 │   ├── job_matcher.py       # Job matching logic
 │   ├── resume_parser.py     # Resume parsing implementation
-│   └── __init__.py
+│   ├── models.py            # ML models handling
+│   ├── __init__.py
 ├── data/
 │   └── esco_skills.csv      # ESCO skills database
 ├── models/                  # Saved ML models
 ├── notebooks/               # Jupyter notebooks for experimentation
 ├── frontend/                # (Future) Web interface
 ├── requirements.txt         # Dependency list
+├── .env                     # Environment variables (if needed)
 └── README.md                # This document
 ```
 
@@ -120,6 +129,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 Abdullah Shareef  
-abdullahshareef7945512@gmail.com
-(https://github.com/AbdullahShareef79/resume-parser-job-matcher)
+📧 abdullahshareef7945512@gmail.com  
+🔗 [GitHub Repository](https://github.com/AbdullahShareef79/resume-parser-job-matcher)
 
