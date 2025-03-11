@@ -65,13 +65,9 @@ class ResumeResponse(BaseModel):
 # Lifecycle event handlers
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup tasks
     logger.info("Application starting up...")
-    # Here you could initialize DB connections, load ML models, etc.
     yield
-    # Shutdown tasks
     logger.info("Application shutting down...")
-    # Here you could close DB connections, save state, etc.
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(
@@ -79,27 +75,18 @@ app = FastAPI(
     description="A tool to parse resumes and match them with job listings",
     version="2.0.0",
     lifespan=lifespan,
-    docs_url="/api/docs",  # Separate API docs from frontend
+    docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
 
 # Enable CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
-
-# Add request processing time middleware
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
 
 # Mount static files with cache control
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
@@ -121,7 +108,6 @@ async def read_root():
 
 def validate_file(file: UploadFile) -> None:
     """Validate uploaded file type and size"""
-    # Check file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -129,24 +115,21 @@ def validate_file(file: UploadFile) -> None:
             detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
-    # Check file size (5MB max)
-    file.file.seek(0, 2)  # Move to end of file
-    file_size = file.file.tell()  # Get file size
-    file.file.seek(0)  # Reset file pointer
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
     
-    if file_size > 5 * 1024 * 1024:  # 5MB
+    if file_size > 5 * 1024 * 1024:
         raise HTTPException(
             status_code=400,
             detail="File too large. Maximum size is 5MB."
         )
 
-# Function to clean up old files
+# Cleanup function
 async def cleanup_old_files(age_hours: int = 24):
-    """Remove files older than specified hours"""
     now = time.time()
     for filename in os.listdir(UPLOAD_DIR):
         file_path = os.path.join(UPLOAD_DIR, filename)
-        # If file is older than age_hours, delete it
         if os.path.isfile(file_path) and os.stat(file_path).st_mtime < now - age_hours * 3600:
             try:
                 os.remove(file_path)
@@ -154,58 +137,33 @@ async def cleanup_old_files(age_hours: int = 24):
             except Exception as e:
                 logger.error(f"Error removing {filename}: {e}")
 
-# Endpoint to upload and process a resume
+# Main upload endpoint
 @app.post("/api/upload/", response_model=ResumeResponse)
 async def upload_resume(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     try:
-        # Validate the file
         validate_file(file)
         
-        # Create a unique filename to prevent overwriting
         original_filename = file.filename
         file_ext = os.path.splitext(original_filename)[1]
         unique_filename = f"{uuid.uuid4()}{file_ext}"
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
         
-        # Save the uploaded file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
         logger.info(f"File uploaded: {original_filename} -> {unique_filename}")
         
-        # Schedule cleanup of old files
         background_tasks.add_task(cleanup_old_files)
         
-        # Parse the resume
-        try:
-            parsed_data = parse_resume(file_path)
-            if isinstance(parsed_data, dict) and "error" in parsed_data:
-                raise HTTPException(status_code=400, detail=parsed_data["error"])
-        except Exception as e:
-            logger.error(f"Resume parsing error: {e}")
-            raise HTTPException(status_code=422, detail=f"Failed to parse resume: {str(e)}")
+        parsed_data = parse_resume(file_path)
+        if isinstance(parsed_data, dict) and "error" in parsed_data:
+            raise HTTPException(status_code=400, detail=parsed_data["error"])
 
-        # Ensure parsed_data has the expected structure
-        if not isinstance(parsed_data, dict):
-            parsed_data = {"skills": []}
-        if "skills" not in parsed_data:
-            parsed_data["skills"] = []
+        parsed_data.setdefault("skills", [])
 
-        # Fetch job listings based on extracted skills
-        try:
-            job_listings = fetch_jobs(parsed_data.get("skills", []))
-        except Exception as e:
-            logger.error(f"Job fetching error: {e}")
-            job_listings = []  # Continue with empty listings on failure
-        
-        # Rank jobs based on resume skills
-        try:
-            ranked_jobs = rank_jobs(parsed_data.get("skills", []), job_listings)
-        except Exception as e:
-            logger.error(f"Job ranking error: {e}")
-            ranked_jobs = []  # Continue with empty rankings on failure
+        job_listings = fetch_jobs(parsed_data.get("skills", []))
+        ranked_jobs = rank_jobs(parsed_data.get("skills", []), job_listings)
 
-        # Prepare response object
         response_data = {
             "id": str(uuid.uuid4()),
             "filename": original_filename,
@@ -217,20 +175,12 @@ async def upload_resume(background_tasks: BackgroundTasks, file: UploadFile = Fi
         return response_data
 
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
         logger.exception(f"Unexpected error processing resume: {e}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred while processing your resume")
 
-# Endpoint to get processed resume data by ID
-@app.get("/api/resume/{resume_id}", response_model=Optional[ResumeResponse])
-async def get_resume(resume_id: str):
-    # In a real app, you would fetch from a database
-    # For this example, we'll return a not found error since we don't have persistence
-    raise HTTPException(status_code=404, detail="Resume not found")
-
-# Endpoint to get job listings without uploading a resume
+# Get job listings without uploading a resume
 @app.get("/api/jobs/")
 async def get_jobs(skills: Optional[List[str]] = Query(None), limit: int = Query(10, ge=1, le=50)):
     try:
@@ -247,22 +197,21 @@ async def get_jobs(skills: Optional[List[str]] = Query(None), limit: int = Query
         logger.exception(f"Error fetching jobs: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while fetching job listings")
 
-# For backward compatibility with original code
+# **FIXED Legacy Upload Endpoint**
 @app.post("/upload/")
-async def upload_resume_legacy(file: UploadFile = File(...)):
-    """Legacy endpoint for compatibility with original code"""
-    # Redirect to the new endpoint
-    response = await upload_resume(BackgroundTasks(), file)
+async def upload_resume_legacy(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    """Legacy endpoint for compatibility with older frontend requests"""
+    response = await upload_resume(background_tasks, file)
     return JSONResponse(
         status_code=200,
         content={
-            "filename": response["filename"],
-            "parsed_data": response["parsed_data"],
-            "matched_jobs": response["matched_jobs"],
+            "filename": response.filename,
+            "parsed_data": response.parsed_data.dict(),
+            "matched_jobs": [job.dict() for job in response.matched_jobs],
         },
     )
 
 # Run the application
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
