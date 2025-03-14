@@ -37,7 +37,7 @@ python -m spacy download en_core_web_trf
 python -m nltk.downloader punkt wordnet stopwords
 ```
 
-4. Download ESCO skills dataset and place it in the `data/` directory:
+4. Download the ESCO skills dataset and place it in the `data/` directory:
 ```bash
 mkdir -p data
 wget -O data/esco_skills.csv https://esco.ec.europa.eu/sites/default/files/esco_skills.csv
@@ -47,17 +47,17 @@ wget -O data/esco_skills.csv https://esco.ec.europa.eu/sites/default/files/esco_
 
 ### Run the API server:
 ```bash
-uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 The API will be available at:
-- Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Endpoint: [http://localhost:8000/upload](http://localhost:8000/upload)
+- Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Endpoint: [http://127.0.0.1:8000/upload](http://127.0.0.1:8000/upload)
 
 ### Example API Request:
 ```bash
 curl -X 'POST' \
-  'http://localhost:8000/upload/' \
+  'http://127.0.0.1:8000/upload/' \
   -H 'accept: application/json' \
   -H 'Content-Type: multipart/form-data' \
   -F 'file=@path/to/your/resume.pdf;type=application/pdf'
@@ -108,6 +108,11 @@ Upload a resume file (PDF/DOCX) and get parsed data with job matches.
   ]
 }
 ```
+
+## Troubleshooting
+
+- **Check the correct URL:** If running the server locally, use [http://127.0.0.1:8000](http://127.0.0.1:8000) instead of [http://0.0.0.0:8000](http://0.0.0.0:8000).
+- **Ensure you are in the correct path:** Before running commands, navigate to the project directory.
 
 ## Technologies Used
 - **Natural Language Processing**: spaCy, NLTK
