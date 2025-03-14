@@ -3,49 +3,1157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Parser and Job Matcher</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>CareerMatch Pro | Resume Analysis & Job Matching</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #16a085;
+            --accent: #3498db;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo i {
+            font-size: 1.8rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #14977b;
+            border-color: #14977b;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .upload-area {
+            position: relative;
+            border: 2px dashed rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--secondary);
+            background-color: rgba(22, 160, 133, 0.05);
+        }
+        
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .upload-area h3 {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .upload-area p {
+            color: #888;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-area input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .upload-info {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .file-info i {
+            color: var(--primary);
+        }
+        
+        .file-info span {
+            font-weight: 500;
+        }
+        
+        .file-meta {
+            color: #888;
+            font-size: 0.875rem;
+        }
+        
+        .progress-container {
+            height: 4px;
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: var(--secondary);
+            transition: width 0.3s ease;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .feature-card {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            transition: var(--transition);
+        }
+        
+        .feature-card:hover {
+            background-color: var(--light);
+            transform: translateY(-3px);
+        }
+        
+        .feature-card i {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-card h4 {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            color: #666;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--secondary);
+            border-bottom-color: var(--secondary);
+        }
+        
+        .tab:hover:not(.active) {
+            color: var(--primary);
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .parsed-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .parsed-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .parsed-heading h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .parsed-heading .edit-btn {
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .parsed-content {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.875rem;
+        }
+        
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .skill-tag {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .job-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .job-card {
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: start;
+        }
+        
+        .job-card:hover {
+            border-color: var(--secondary);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .job-logo {
+            width: 50px;
+            height: 50px;
+            background-color: #f0f0f0;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .job-info h3 {
+            margin-bottom: 0.25rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .job-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-size: 0.875rem;
+        }
+        
+        .job-meta div {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .match-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .match-percentage {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 1rem;
+            background: conic-gradient(var(--success) 0% 85%, #f0f0f0 85% 100%);
+            position: relative;
+        }
+        
+        .match-percentage::before {
+            content: "";
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+        }
+        
+        .match-percentage span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .match-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        .job-description {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .job-expand {
+            color: var(--accent);
+            font-size: 0.875rem;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        
+        .matching-skills {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .matching-skill {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .missing-skill {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        .loading {
+            display: none;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--secondary);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: var(--danger);
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .status-warning {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: white;
+            font-size: 0.875rem;
+        }
+        
+        .footer {
+            background-color: var(--primary);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-column h3 {
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: #888;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+    </style>
 </head>
 <body>
-
-<header>
-    <h1>Resume Parser and Job Matcher</h1>
-</header>
-
-<div class="container">
-    <div class="form-container">
-        <h2>Upload Your Resume</h2>
-        <form id="uploadForm" enctype="multipart/form-data">
-            <input type="file" id="resumeFile" name="file" accept=".pdf,.docx" required />
-            <button type="submit" id="submitBtn">Upload Resume</button>
-            <div id="loading" class="loading" style="display: none;"></div>
-            <div id="errorMessage" class="error-message"></div>
-        </form>
-    </div>
-
-    <div class="result-container">
-        <div>
-            <h2>Parsed Data</h2>
-            <pre id="parsedData">Your parsed resume data will appear here...</pre>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-briefcase"></i>
+                <h1>CareerMatch Pro</h1>
+            </div>
+            <div class="header-actions">
+                <a href="#" class="btn"><i class="fas fa-question-circle"></i> Help</a>
+                <a href="#" class="btn btn-primary"><i class="fas fa-user"></i> Account</a>
+            </div>
         </div>
+    </header>
 
-        <div>
-            <h2>Matched Jobs</h2>
-            <ul id="matchedJobs">
-                <li class="job-card">
-                    <h3>Job Title</h3>
-                    <p><strong>Company:</strong> Company Name</p>
-                    <p><strong>Location:</strong> Job Location</p>
-                    <div class="details">
-                        <p><strong>Description:</strong> Job description goes here...</p>
+    <div class="container">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-file-upload"></i> Resume Analysis</h2>
+                    <span class="status-chip status-success" id="statusChip" style="display: none;">
+                        <i class="fas fa-check-circle"></i> Analyzed
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="upload-area" id="dropArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>Upload Your Resume</h3>
+                            <p>Drag and drop your file here or click to browse</p>
+                            <span>Supported formats: PDF, DOCX, RTF</span>
+                            <input type="file" id="resumeFile" name="file" accept=".pdf,.docx,.rtf" class="visually-hidden" />
+                        </div>
+                        
+                        <div id="fileInfo" class="upload-info" style="display: none;">
+                            <div class="file-info">
+                                <i class="fas fa-file-alt"></i>
+                                <span id="fileName">resume.pdf</span>
+                                <span class="file-meta" id="fileSize">(125 KB)</span>
+                            </div>
+                            <button type="button" id="removeFile" class="btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="progressContainer" class="progress-container" style="display: none;">
+                            <div id="progressBar" class="progress-bar"></div>
+                        </div>
+                        
+                        <div id="errorMessage" class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="errorText"></span>
+                        </div>
+                        
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload & Analyze
+                        </button>
+                        
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <i class="fas fa-robot"></i>
+                                <h4>AI-Powered Analysis</h4>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-bolt"></i>
+                                <h4>Instant Results</h4>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-chart-line"></i>
+                                <h4>Skills Gap Analysis</h4>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-lock"></i>
+                                <h4>Secure Processing</h4>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-chart-bar"></i> Results Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="parsed-tab">Resume Data</div>
+                        <div class="tab" data-tab="jobs-tab">Job Matches</div>
                     </div>
-                </li>
-            </ul>
+                    
+                    <div id="loading" class="loading">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    
+                    <div id="parsed-tab" class="tab-content active">
+                        <div class="parsed-section">
+                            <div class="parsed-heading">
+                                <h3>Personal Information</h3>
+                                <span class="edit-btn"><i class="fas fa-pencil-alt"></i> Edit</span>
+                            </div>
+                            <div class="parsed-content" id="personalInfo">No data available. Please upload a resume.</div>
+                        </div>
+                        
+                        <div class="parsed-section">
+                            <div class="parsed-heading">
+                                <h3>Work Experience</h3>
+                                <span class="edit-btn"><i class="fas fa-pencil-alt"></i> Edit</span>
+                            </div>
+                            <div class="parsed-content" id="workExperience">No data available. Please upload a resume.</div>
+                        </div>
+                        
+                        <div class="parsed-section">
+                            <div class="parsed-heading">
+                                <h3>Education</h3>
+                                <span class="edit-btn"><i class="fas fa-pencil-alt"></i> Edit</span>
+                            </div>
+                            <div class="parsed-content" id="education">No data available. Please upload a resume.</div>
+                        </div>
+                        
+                        <div class="parsed-section">
+                            <div class="parsed-heading">
+                                <h3>Skills</h3>
+                                <span class="edit-btn"><i class="fas fa-pencil-alt"></i> Edit</span>
+                            </div>
+                            <div class="parsed-content" id="skills">No data available. Please upload a resume.</div>
+                            <div class="skill-tags" id="skillTags"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="jobs-tab" class="tab-content">
+                        <div class="filters">
+                            <select class="filter-select" id="locationFilter">
+                                <option value="">All Locations</option>
+                                <option value="Remote">Remote</option>
+                                <option value="New York">New York</option>
+                                <option value="San Francisco">San Francisco</option>
+                                <option value="Austin">Austin</option>
+                            </select>
+                            <select class="filter-select" id="matchFilter">
+                                <option value="">All Matches</option>
+                                <option value="90">90%+ Match</option>
+                                <option value="80">80%+ Match</option>
+                                <option value="70">70%+ Match</option>
+                            </select>
+                        </div>
+                        
+                        <div id="jobList" class="job-list">
+                            <div class="job-card">
+                                <div class="job-logo">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div class="job-info">
+                                    <h3>Senior Software Engineer</h3>
+                                    <div class="job-meta">
+                                        <div><i class="fas fa-building"></i> Tech Solutions Inc.</div>
+                                        <div><i class="fas fa-map-marker-alt"></i> San Francisco, CA</div>
+                                        <div><i class="fas fa-clock"></i> Full-time</div>
+                                    </div>
+                                    <div class="job-description">
+                                        Responsible for designing and implementing high-performance, scalable software solutions for enterprise clients. Collaborate with cross-functional teams to deliver innovative products.
+                                    </div>
+                                    <div class="job-expand">
+                                        <i class="fas fa-chevron-down"></i> View details
+                                    </div>
+                                    <div class="matching-skills">
+                                        <div class="matching-skill"><i class="fas fa-check"></i> React</div>
+                                        <div class="matching-skill"><i class="fas fa-check"></i> Node.js</div>
+                                        <div class="matching-skill missing-skill"><i class="fas fa-times"></i> AWS</div>
+                                    </div>
+                                </div>
+                                <div class="match-score">
+                                    <div class="match-percentage">
+                                        <span>85%</span>
+                                    </div>
+                                    <span class="match-label">Match</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+    
+    <div class="modal" id="jobModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Job Details</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Senior Software Engineer</h3>
+                <div class="job-meta">
+                    <div><i class="fas fa-building"></i> Tech Solutions Inc.</div>
+                    <div><i class="fas fa-map-marker-alt"></i> San Francisco, CA</div>
+                    <div><i class="fas fa-clock"></i> Full-time</div>
+                    <div><i class="fas fa-dollar-sign"></i> $120,000 - $150,000</div>
+                </div>
+                
+                <h4>Job Description</h4>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla quam velit, vulputate eu pharetra nec, mattis ac neque. Duis vulputate commodo lectus, ac blandit elit tincidunt id.</p>
+                
+                <h4>Requirements</h4>
+                <ul>
+                    <li>5+ years of experience in software development</li>
+                    <li>Proficient in React, Node.js, and AWS</li>
+                    <li>Bachelor's degree in Computer Science or related field</li>
+                </ul>
+                
+                <h4>Your Match</h4>
+                <div class="matching-skills">
+                    <div class="matching-skill"><i class="fas fa-check"></i> React</div>
+                    <div class="matching-skill"><i class="fas fa-check"></i> Node.js</div>
+                    <div class="matching-skill missing-skill"><i class="fas fa-times"></i> AWS</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn">Save Job</button>
+                <button class="btn btn-primary">Apply Now</button>
+            </div>
+        </div>
+    </div>
 
-<script src="/static/scripts.js"></script>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>CareerMatch Pro</h3>
+                <ul class="footer-links">
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Features</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">Testimonials</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Resources</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Career Blog</a></li>
+                    <li><a href="#">Resume Tips</a></li>
+                    <li><a href="#">Interview Guides</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Legal</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Data Processing</a></li>
+                    <li><a href="#">Cookie Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Connect</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">LinkedIn</a></li>
+                    <li><a href="#">Facebook</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab content
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Show the selected tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // File upload handling
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('resumeFile');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const removeFileBtn = document.getElementById('removeFile');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            const statusChip = document.getElementById('statusChip');
+            
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Prevent default behavior for drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight drop area when file is dragged over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('dragover');
+            }
+            
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    
+                    // Check file type
+                    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/rtf'];
+                    if (!allowedTypes.includes(file.type)) {
+                        showError('Invalid file type. Please upload PDF, DOCX, or RTF file.');
+                        return;
+                    }
+                    
+                    // Check file size (limit to 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showError('File size exceeds 5MB limit.');
+                        return;
+                    }
+                    
+                    // Display file info
+                    fileName.textContent = file.name;
+                    fileSize.textContent = `(${formatFileSize(file.size)})`;
+                    fileInfo.style.display = 'flex';
+                    errorMessage.style.display = 'none';
+                }
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' bytes';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+            
+            function showError(message) {
+                errorText.textContent = message;
+                errorMessage.style.display = 'flex';
+            }
+            
+            removeFileBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                statusChip.style.display = 'none';
+            });
+            
+            // Form submission
+            const uploadForm = document.getElementById('uploadForm');
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!fileInput.files.length) {
+                    showError('Please select a file to upload.');
+                    return;
+                }
+                
+                // Show progress bar
+                progressContainer.style.display = 'block';
+                
+                // Simulate file upload with progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        simulateAnalysis();
+                    }
+                }, 300);
+            });
+            
+            function simulateAnalysis() {
+                // Show loading spinner
+                document.getElementById('loading').style.display = 'flex';
+                
+                // Simulate analysis process
+                setTimeout(() => {
+                    // Hide loading spinner
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Update status
+                    statusChip.style.display = 'inline-flex';
+                    
+                    // Populate with sample data
+                    document.getElementById('personalInfo').textContent = 'Name: John Doe\nEmail: john.doe@example.com\nPhone: (555) 123-4567\nLocation: San Francisco, CA';
+                    
+                    document.getElementById('workExperience').textContent = 'Senior Developer\nTech Innovations Inc. | Jan 2020 - Present\n• Led development of cloud-based applications\n• Managed team of 5 developers\n\nSoftware Engineer\nGlobal Solutions | Mar 2016 - Dec 2019\n• Implemented RESTful APIs\n• Developed front-end components using React';
+                    
+                    document.getElementById('education').textContent = 'M.S. Computer Science\nStanford University | 2014 - 2016\n\nB.S. Computer Engineering\nUniversity of California, Berkeley | 2010 - 2014';
+                    
+                    document.getElementById('skills').textContent = 'Programming Languages: JavaScript, Python, Java\nFrameworks: React, Node.js, Express\nTools: Git, Docker, Jenkins\nDatabases: MongoDB, PostgreSQL';
+                    
+                    // Create skill tags
+                    const skillsToAdd = ['JavaScript', 'Python', 'React', 'Node.js', 'MongoDB', 'Docker'];
+                    const skillTags = document.getElementById('skillTags');
+                    skillTags.innerHTML = '';
+                    
+                    skillsToAdd.forEach(skill => {
+                        const tag = document.createElement('div');
+                        tag.className = 'skill-tag';
+                        tag.textContent = skill;
+                        skillTags.appendChild(tag);
+                    });
+                }, 2000);
+            }
+            
+            // Job card expand functionality
+            document.querySelectorAll('.job-expand').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openJobModal();
+                });
+            });
+            
+            // Modal functionality
+            const modal = document.getElementById('jobModal');
+            const closeBtn = modal.querySelector('.modal-close');
+            
+            function openJobModal() {
+                modal.style.display = 'flex';
+            }
+            
+            function closeJobModal() {
+                modal.style.display = 'none';
+            }
+            
+            closeBtn.addEventListener('click', closeJobModal);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeJobModal();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

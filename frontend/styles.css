@@ -7,6 +7,7 @@ body {
     color: #333;
 }
 
+/* Header */
 header {
     background-color: #4CAF50;
     color: white;
@@ -15,6 +16,7 @@ header {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Headings */
 h1, h2 {
     margin: 0;
 }
@@ -24,12 +26,14 @@ h2 {
     color: #4CAF50;
 }
 
+/* Main Container */
 .container {
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
+/* Form & Result Containers */
 .form-container, .result-container {
     background-color: white;
     padding: 20px;
@@ -42,8 +46,9 @@ h2 {
     text-align: center;
 }
 
+/* File Upload Input */
 input[type="file"] {
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
     width: 100%;
     border: 2px dashed #4CAF50;
@@ -51,17 +56,19 @@ input[type="file"] {
     background-color: #f9f9f9;
     cursor: pointer;
     margin-bottom: 10px;
+    transition: border-color 0.3s ease;
 }
 
 input[type="file"]:hover {
     border-color: #45a049;
 }
 
+/* Buttons */
 button {
     background-color: #4CAF50;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 20px;
     font-size: 16px;
     cursor: pointer;
     border-radius: 8px;
@@ -78,6 +85,7 @@ button:disabled {
     cursor: not-allowed;
 }
 
+/* Loading Spinner */
 .loading {
     display: inline-block;
     width: 20px;
@@ -94,12 +102,14 @@ button:disabled {
     100% { transform: rotate(360deg); }
 }
 
+/* Result Display */
 .result-container {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
+/* Parsed Data */
 #parsedData {
     background-color: #f9f9f9;
     padding: 15px;
@@ -110,11 +120,14 @@ button:disabled {
     word-wrap: break-word;
 }
 
+/* Job Listings */
 #matchedJobs {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
 }
 
+/* Job Card */
 .job-card {
     background-color: #fff;
     padding: 15px;
@@ -128,11 +141,13 @@ button:disabled {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Job Card Titles */
 .job-card h3 {
     margin: 0;
     color: #4CAF50;
 }
 
+/* Job Card Details */
 .job-card p {
     margin: 5px 0;
     color: #555;
@@ -141,14 +156,18 @@ button:disabled {
 .job-card .details {
     display: none;
     margin-top: 10px;
+    font-size: 14px;
+    color: #666;
 }
 
 .job-card:hover .details {
     display: block;
 }
 
+/* Error Message */
 .error-message {
     color: #ff4444;
     text-align: center;
     margin-top: 10px;
+    font-weight: bold;
 }
