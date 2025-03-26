@@ -118,15 +118,54 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Form submission
-    const uploadForm = document.getElementById('uploadForm');
-    uploadForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        // Check if file is selected
-        if (!fileInput.files.length) {
-            showError('Please select a file to upload.');
-            return;
+// Replace the existing form submission handler with this:
+uploadForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!fileInput.files.length) {
+        showError('Please select a file to upload.');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    progressContainer.style.display = 'block';
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        // Simulate upload progress (remove in production)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 10;
+            progressBar.style.width = `${progress}%`;
+            if (progress >= 100) clearInterval(progressInterval);
+        }, 200);
+        
+        // Send to backend
+        const response = await fetch('/api/upload/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Upload failed');
         }
+        
+        const data = await response.json();
+        updateUIWithResults(data);
+        
+    } catch (error) {
+        showError(error.message);
+        console.error('Upload error:', error);
+    } finally {
+        submitBtn.disabled = false;
+        document.getElementById('loading').style.display = 'none';
+    }
+;
 
         const submitBtn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
