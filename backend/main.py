@@ -156,73 +156,41 @@ async def cleanup_old_files(age_hours: int = 24):
 
 # Endpoint to upload and process a resume
 @app.post("/api/upload/", response_model=ResumeResponse)
-async def upload_resume(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
-    try:
-        # Validate the file
-        validate_file(file)
-        
-        # Create a unique filename to prevent overwriting
-        original_filename = file.filename
-        file_ext = os.path.splitext(original_filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-        
-        # Save the uploaded file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        logger.info(f"File uploaded: {original_filename} -> {unique_filename}")
-        
-        # Schedule cleanup of old files
-        background_tasks.add_task(cleanup_old_files)
-        
-        # Parse the resume
+async def upload_resume(file: UploadFile = File(...)):
         try:
+            # Validate file type
+            if file.content_type not in ["application/pdf", 
+                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                    "application/rtf"]:
+                raise HTTPException(status_code=400, detail="Invalid file type")
+
+            # Create uploads directory if not exists
+            os.makedirs("uploads", exist_ok=True)
+            
+            # Generate unique filename
+            file_ext = os.path.splitext(file.filename)[1]
+            file_path = f"uploads/{uuid.uuid4()}{file_ext}"
+            
+            # Save file
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Parse resume
             parsed_data = parse_resume(file_path)
-            if isinstance(parsed_data, dict) and "error" in parsed_data:
-                raise HTTPException(status_code=400, detail=parsed_data["error"])
-        except Exception as e:
-            logger.error(f"Resume parsing error: {e}")
-            raise HTTPException(status_code=422, detail=f"Failed to parse resume: {str(e)}")
-
-        # Ensure parsed_data has the expected structure
-        if not isinstance(parsed_data, dict):
-            parsed_data = {"skills": []}
-        if "skills" not in parsed_data:
-            parsed_data["skills"] = []
-
-        # Fetch job listings based on extracted skills
-        try:
+            
+            # Fetch and rank jobs
             job_listings = fetch_jobs(parsed_data.get("skills", []))
-        except Exception as e:
-            logger.error(f"Job fetching error: {e}")
-            job_listings = []  # Continue with empty listings on failure
-        
-        # Rank jobs based on resume skills
-        try:
             ranked_jobs = rank_jobs(parsed_data.get("skills", []), job_listings)
+            
+            return {
+                "id": str(uuid.uuid4()),
+                "filename": file.filename,
+                "upload_date": datetime.now().isoformat(),
+                "parsed_data": parsed_data,
+                "matched_jobs": ranked_jobs
+            }
         except Exception as e:
-            logger.error(f"Job ranking error: {e}")
-            ranked_jobs = []  # Continue with empty rankings on failure
-
-        # Prepare response object
-        response_data = {
-            "id": str(uuid.uuid4()),
-            "filename": original_filename,
-            "upload_date": datetime.now().isoformat(),
-            "parsed_data": parsed_data,
-            "matched_jobs": ranked_jobs
-        }
-        
-        return response_data
-
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
-    except Exception as e:
-        logger.exception(f"Unexpected error processing resume: {e}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred while processing your resume")
-
+            raise HTTPException(status_code=500, detail=str(e))
 # Endpoint to get processed resume data by ID
 @app.get("/api/resume/{resume_id}", response_model=Optional[ResumeResponse])
 async def get_resume(resume_id: str):
