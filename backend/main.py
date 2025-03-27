@@ -12,6 +12,7 @@ import time
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 import mimetypes
+from pathlib import Path
 
 # Import resume parsing & job matching modules
 from backend.resume_parser import parse_resume
@@ -67,11 +68,12 @@ class ResumeResponse(BaseModel):
 async def lifespan(app: FastAPI):
     # Startup tasks
     logger.info("Application starting up...")
-    # Here you could initialize DB connections, load ML models, etc.
+    # Ensure required directories exist
+    Path(UPLOAD_DIR).mkdir(exist_ok=True)
+    Path("frontend").mkdir(exist_ok=True)
     yield
     # Shutdown tasks
     logger.info("Application shutting down...")
-    # Here you could close DB connections, save state, etc.
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(
@@ -79,16 +81,16 @@ app = FastAPI(
     description="A tool to parse resumes and match them with job listings",
     version="2.0.0",
     lifespan=lifespan,
-    docs_url="/api/docs",  # Separate API docs from frontend
+    docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
 
 # Enable CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -101,8 +103,12 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     return response
 
-# Mount static files with cache control
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# Mount static files with error handling
+static_dir = Path(__file__).parent.parent / "frontend"
+try:
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+except RuntimeError as e:
+    logger.warning(f"Static files not mounted: {e}")
 
 # Health check endpoint
 @app.get("/health")
@@ -112,16 +118,16 @@ async def health_check():
 # Serve the HTML page from the frontend folder
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
+    index_path = static_dir / "index.html"
     try:
-        with open("frontend/index.html", "r") as file:
+        with open(index_path, "r") as file:
             return HTMLResponse(content=file.read())
     except FileNotFoundError:
         logger.error("Frontend index.html not found")
-        raise HTTPException(status_code=404, detail="Frontend index.html not found")
+        return HTMLResponse(content="<h1>Welcome to Resume Matcher API</h1>", status_code=404)
 
 def validate_file(file: UploadFile) -> None:
     """Validate uploaded file type and size"""
-    # Check file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -129,10 +135,9 @@ def validate_file(file: UploadFile) -> None:
             detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
-    # Check file size (5MB max)
-    file.file.seek(0, 2)  # Move to end of file
-    file_size = file.file.tell()  # Get file size
-    file.file.seek(0)  # Reset file pointer
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
     
     if file_size > 5 * 1024 * 1024:  # 5MB
         raise HTTPException(
@@ -140,13 +145,11 @@ def validate_file(file: UploadFile) -> None:
             detail="File too large. Maximum size is 5MB."
         )
 
-# Function to clean up old files
 async def cleanup_old_files(age_hours: int = 24):
     """Remove files older than specified hours"""
     now = time.time()
     for filename in os.listdir(UPLOAD_DIR):
         file_path = os.path.join(UPLOAD_DIR, filename)
-        # If file is older than age_hours, delete it
         if os.path.isfile(file_path) and os.stat(file_path).st_mtime < now - age_hours * 3600:
             try:
                 os.remove(file_path)
@@ -154,58 +157,54 @@ async def cleanup_old_files(age_hours: int = 24):
             except Exception as e:
                 logger.error(f"Error removing {filename}: {e}")
 
-# Endpoint to upload and process a resume
 @app.post("/api/upload/", response_model=ResumeResponse)
-async def upload_resume(file: UploadFile = File(...)):
-        try:
-            # Validate file type
-            if file.content_type not in ["application/pdf", 
-                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    "application/rtf"]:
-                raise HTTPException(status_code=400, detail="Invalid file type")
+async def upload_resume(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    try:
+        validate_file(file)
+        
+        file_ext = os.path.splitext(file.filename)[1]
+        file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}{file_ext}")
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        background_tasks.add_task(cleanup_old_files)
+        
+        parsed_data = parse_resume(file_path)
+        if isinstance(parsed_data, dict) and "error" in parsed_data:
+            raise HTTPException(status_code=400, detail=parsed_data["error"])
 
-            # Create uploads directory if not exists
-            os.makedirs("uploads", exist_ok=True)
-            
-            # Generate unique filename
-            file_ext = os.path.splitext(file.filename)[1]
-            file_path = f"uploads/{uuid.uuid4()}{file_ext}"
-            
-            # Save file
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            
-            # Parse resume
-            parsed_data = parse_resume(file_path)
-            
-            # Fetch and rank jobs
-            job_listings = fetch_jobs(parsed_data.get("skills", []))
-            ranked_jobs = rank_jobs(parsed_data.get("skills", []), job_listings)
-            
-            return {
-                "id": str(uuid.uuid4()),
-                "filename": file.filename,
-                "upload_date": datetime.now().isoformat(),
-                "parsed_data": parsed_data,
-                "matched_jobs": ranked_jobs
-            }
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-# Endpoint to get processed resume data by ID
+        job_listings = fetch_jobs(parsed_data.get("skills", []))
+        ranked_jobs = rank_jobs(parsed_data.get("skills", []), job_listings)
+        
+        return {
+            "id": str(uuid.uuid4()),
+            "filename": file.filename,
+            "upload_date": datetime.now().isoformat(),
+            "parsed_data": parsed_data,
+            "matched_jobs": ranked_jobs
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error processing resume: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/resume/{resume_id}", response_model=Optional[ResumeResponse])
 async def get_resume(resume_id: str):
-    # In a real app, you would fetch from a database
-    # For this example, we'll return a not found error since we don't have persistence
     raise HTTPException(status_code=404, detail="Resume not found")
 
-# Endpoint to get job listings without uploading a resume
 @app.get("/api/jobs/")
-async def get_jobs(skills: Optional[List[str]] = Query(None), limit: int = Query(10, ge=1, le=50)):
+async def get_jobs(
+    skills: Optional[List[str]] = Query(None),
+    location: Optional[str] = Query(None),
+    limit: int = Query(10, ge=1, le=50)
+):
     try:
         if not skills or len(skills) == 0:
             raise HTTPException(status_code=400, detail="At least one skill must be provided")
         
-        job_listings = fetch_jobs(skills)
+        job_listings = fetch_jobs(skills, location)
         ranked_jobs = rank_jobs(skills, job_listings)
         
         return ranked_jobs[:limit]
@@ -215,22 +214,6 @@ async def get_jobs(skills: Optional[List[str]] = Query(None), limit: int = Query
         logger.exception(f"Error fetching jobs: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while fetching job listings")
 
-# For backward compatibility with original code
-@app.post("/upload/")
-async def upload_resume_legacy(file: UploadFile = File(...)):
-    """Legacy endpoint for compatibility with original code"""
-    # Redirect to the new endpoint
-    response = await upload_resume(BackgroundTasks(), file)
-    return JSONResponse(
-        status_code=200,
-        content={
-            "filename": response["filename"],
-            "parsed_data": response["parsed_data"],
-            "matched_jobs": response["matched_jobs"],
-        },
-    )
-
-# Run the application
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

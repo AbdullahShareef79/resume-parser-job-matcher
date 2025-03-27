@@ -302,84 +302,34 @@ def calculate_similarity(resume_text, job_descriptions, resume_skills=None, dim_
     
     return similarity_scores
 
-def rank_jobs(resume_text, job_listings, resume_skills=None):
+def rank_jobs(resume_skills, job_listings):
     """
-    Ranks jobs based on similarity scores with additional metadata.
-    
-    Args:
-        resume_text (str): The resume text
-        job_listings (list): List of job dictionaries
-        resume_skills (set): Optional set of skills extracted from the resume
-        
-    Returns:
-        list: Ranked job listings with similarity scores and match details
+    Enhanced version that includes match percentage
     """
     if not job_listings:
-        logger.warning("No job listings provided for ranking")
         return []
 
-    # Preprocess resume text
-    processed_resume_text = preprocess_text(resume_text)
-    
-    # Extract job descriptions
-    job_descriptions = []
+    ranked_jobs = []
     for job in job_listings:
-        description = job.get("description", "")
-        if not description:
-            description = " ".join([
-                job.get("title", ""),
-                job.get("company", ""),
-                job.get("location", "")
-            ])
-        job_descriptions.append(description)
+        # Calculate matching skills
+        job_skills = set(skill.lower() for skill in job.get("required_skills", []))
+        matching_skills = [skill for skill in resume_skills if skill.lower() in job_skills]
+        
+        # Calculate match percentage (0-100)
+        total_required = max(1, len(job_skills))  # Avoid division by zero
+        match_percentage = round((len(matching_skills) / total_required) * 100)
+        
+        ranked_jobs.append({
+            **job,  # Include all original job fields
+            "match_percentage": match_percentage,
+            "matching_skills": matching_skills,
+            "missing_skills": list(job_skills - set(s.lower() for s in matching_skills))
+        })
     
-    try:
-        # Calculate similarity scores
-        similarity_scores = calculate_similarity(
-            processed_resume_text, 
-            job_descriptions,
-            resume_skills
-        )
-        
-        # Add similarity scores and match details to job listings
-        ranked_jobs = []
-        for i, job in enumerate(job_listings):
-            if i < len(similarity_scores):
-                # Create a copy of the job to avoid modifying the original
-                job_copy = job.copy()
-                
-                # Add similarity score
-                job_copy["similarity_score"] = float(similarity_scores[i])
-                
-                # Add match confidence level
-                if similarity_scores[i] >= 0.8:
-                    job_copy["match_level"] = "Excellent"
-                elif similarity_scores[i] >= 0.6:
-                    job_copy["match_level"] = "Good"
-                elif similarity_scores[i] >= 0.4:
-                    job_copy["match_level"] = "Fair"
-                else:
-                    job_copy["match_level"] = "Low"
-                    
-                # Extract matching skills if resume_skills is provided
-                if resume_skills and "description" in job:
-                    matching_skills = extract_skills_from_text(job["description"], resume_skills)
-                    job_copy["matching_skills"] = list(matching_skills)
-                    job_copy["skill_match_count"] = len(matching_skills)
-                    job_copy["skill_match_ratio"] = len(matching_skills) / len(resume_skills) if resume_skills else 0
-                
-                ranked_jobs.append(job_copy)
-        
-        # Sort jobs by similarity score in descending order
-        ranked_jobs.sort(key=lambda x: x["similarity_score"], reverse=True)
-        
-        logger.info(f"Successfully ranked {len(ranked_jobs)} jobs")
-        return ranked_jobs
-        
-    except Exception as e:
-        logger.error(f"Error during job ranking: {e}")
-        # Return original listings if ranking fails
-        return job_listings
+    # Sort by match percentage (highest first)
+    return sorted(ranked_jobs, key=lambda x: x["match_percentage"], reverse=True)        
+    
+
 
 def calculate_job_match_statistics(ranked_jobs):
     """
