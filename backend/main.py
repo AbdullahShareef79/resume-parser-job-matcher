@@ -160,18 +160,33 @@ async def cleanup_old_files(age_hours: int = 24):
 @app.post("/api/upload/", response_model=ResumeResponse)
 async def upload_resume(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     try:
+        # Log file details
+        logger.info(f"Received file: {file.filename}")
+        logger.info(f"File content type: {file.content_type}")
+        
         validate_file(file)
         
         file_ext = os.path.splitext(file.filename)[1]
         file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}{file_ext}")
+        
+        # Log file path
+        logger.info(f"Saving file to: {file_path}")
         
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
         background_tasks.add_task(cleanup_old_files)
         
+        # Log before parsing
+        logger.info(f"Attempting to parse resume from: {file_path}")
+        
         parsed_data = parse_resume(file_path)
+        
+        # Log parsing results
+        logger.info(f"Parsing result: {parsed_data}")
+        
         if isinstance(parsed_data, dict) and "error" in parsed_data:
+            logger.error(f"Parsing error: {parsed_data['error']}")
             raise HTTPException(status_code=400, detail=parsed_data["error"])
 
         job_listings = fetch_jobs(parsed_data.get("skills", []))
@@ -184,12 +199,13 @@ async def upload_resume(background_tasks: BackgroundTasks, file: UploadFile = Fi
             "parsed_data": parsed_data,
             "matched_jobs": ranked_jobs
         }
-    except HTTPException:
+    except HTTPException as http_e:
+        logger.error(f"HTTP Error: {http_e.detail}")
         raise
     except Exception as e:
-        logger.exception(f"Error processing resume: {e}")
+        logger.exception(f"Unexpected error processing resume: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
+    
 @app.get("/api/resume/{resume_id}", response_model=Optional[ResumeResponse])
 async def get_resume(resume_id: str):
     raise HTTPException(status_code=404, detail="Resume not found")

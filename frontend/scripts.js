@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorMessage = document.getElementById('errorMessage');
     const errorText = document.getElementById('errorText');
     const statusChip = document.getElementById('statusChip');
+    const uploadForm = document.getElementById('uploadForm');
     
     dropArea.addEventListener('click', () => {
         fileInput.click();
@@ -118,59 +119,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Form submission
-// Replace the existing form submission handler with this:
-uploadForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!fileInput.files.length) {
-        showError('Please select a file to upload.');
-        return;
-    }
-    
-    // Show loading state
-    submitBtn.disabled = true;
-    progressContainer.style.display = 'block';
-    document.getElementById('loading').style.display = 'flex';
-    
-    try {
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+    uploadForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        // Simulate upload progress (remove in production)
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 10;
-            progressBar.style.width = `${progress}%`;
-            if (progress >= 100) clearInterval(progressInterval);
-        }, 200);
-        
-        // Send to backend
-        const response = await fetch('/api/upload/', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Upload failed');
+        if (!fileInput.files.length) {
+            showError('Please select a file to upload.');
+            return;
         }
         
-        const data = await response.json();
-        updateUIWithResults(data);
-        
-    } catch (error) {
-        showError(error.message);
-        console.error('Upload error:', error);
-    } finally {
-        submitBtn.disabled = false;
-        document.getElementById('loading').style.display = 'none';
-    }
-;
-
+        // Show loading state
         const submitBtn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
-
-        // Disable submit button and show loading
+        
         submitBtn.disabled = true;
         loading.style.display = 'flex';
         errorMessage.style.display = 'none';
@@ -190,11 +150,10 @@ uploadForm.addEventListener('submit', async function(e) {
             }
         }, 100);
 
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-
         try {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
             const response = await fetch('/upload/', {
                 method: 'POST',
                 body: formData,
@@ -219,10 +178,8 @@ uploadForm.addEventListener('submit', async function(e) {
             showError('An error occurred. ' + error.message);
             console.error('Error:', error);
             
-            // For demo purposes, show sample data if API fails
-            if (process.env.NODE_ENV === 'development') {
-                simulateSuccessfulAnalysis();
-            }
+            // For development/demo purposes, show sample data if API fails
+            simulateSuccessfulAnalysis();
         } finally {
             submitBtn.disabled = false;
             loading.style.display = 'none';
@@ -455,7 +412,7 @@ uploadForm.addEventListener('submit', async function(e) {
             modalTitle.textContent = job.title;
             
             modalBody.innerHTML = `
-                <h3>${job.title}</h                </h3>
+                <h3>${job.title}</h3>
                 <p><strong>Company:</strong> ${job.company}</p>
                 <p><strong>Location:</strong> ${job.location}</p>
                 <p><strong>Employment Type:</strong> ${job.employment_type || 'Full-time'}</p>
@@ -474,7 +431,7 @@ uploadForm.addEventListener('submit', async function(e) {
                     </div>
                     <span class="match-label">Match</span>
                 </div>
-                <button class="apply-button" onclick="window.open('${job.apply_link}', '_blank')">Apply Now</button>
+                <button class="apply-button" onclick="window.open('${job.apply_link || '#'}', '_blank')">Apply Now</button>
             `;
         }
 
