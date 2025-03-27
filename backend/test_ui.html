@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UI Tests</title>
+    <script src="scripts.js"></script>
+    <style>
+        .test-pass { color: green; }
+        .test-fail { color: red; }
+    </style>
+</head>
+<body>
+    <h1>UI Component Tests</h1>
+    
+    <div id="file-upload-test">
+        <h2>File Upload Test</h2>
+        <input type="file" id="test-file-input">
+        <button onclick="testFileHandling()">Run Test</button>
+        <p id="file-test-result"></p>
+    </div>
+    
+    <div id="ui-update-test">
+        <h2>UI Update Test</h2>
+        <button onclick="testUIUpdates()">Run Test</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Test file handling
+        function testFileHandling() {
+            const input = document.getElementById('test-file-input');
+            const result = document.getElementById('file-test-result');
+            
+            if (!input.files.length) {
+                result.textContent = "No file selected";
+                result.className = "test-fail";
+                return;
+            }
+            
+            const file = input.files[0];
+            if (file.type !== "application/pdf") {
+                result.textContent = "Invalid file type";
+                result.className = "test-fail";
+                return;
+            }
+            
+            result.textContent = "File handling works correctly";
+            result.className = "test-pass";
+        }
+        
+        // Test UI update functions
+        function testUIUpdates() {
+            const testData = {
+                parsed_data: {
+                    name: "Test User",
+                    email: "test@example.com",
+                    skills: ["Python", "JavaScript"],
+                    experience: ["Job at Test Company"],
+                    education: ["Degree from Test University"]
+                },
+                matched_jobs: [{
+                    title: "Test Job",
+                    company: "Test Corp",
+                    match_percentage: 85,
+                    matching_skills: ["Python"],
+                    missing_skills: ["React"]
+                }]
+            };
+            
+            try {
+                // Test if UI updates without errors
+                updateUIWithResults(testData);
+                
+                const resultsDiv = document.getElementById('test-results');
+                resultsDiv.innerHTML = `
+                    <p class="test-pass">UI update functions work correctly</p>
+                    <h3>Test Results:</h3>
+                    <div id="personal-info-test"></div>
+                    <div id="skills-test"></div>
+                    <div id="jobs-test"></div>
+                `;
+                
+                // Verify specific elements were updated
+                if (!document.getElementById('personalInfo').textContent.includes("Test User")) {
+                    throw new Error("Personal info not updated");
+                }
+                
+                if (!document.querySelector('.skill-tag')) {
+                    throw new Error("Skills not displayed");
+                }
+                
+                if (!document.querySelector('.job-card')) {
+                    throw new Error("Jobs not displayed");
+                }
+                
+            } catch (error) {
+                document.getElementById('test-results').innerHTML = `
+                    <p class="test-fail">UI update failed: ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
