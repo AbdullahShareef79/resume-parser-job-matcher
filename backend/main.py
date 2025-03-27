@@ -15,9 +15,9 @@ import mimetypes
 from pathlib import Path
 
 # Import resume parsing & job matching modules
-from backend.resume_parser import parse_resume
-from backend.job_matcher import rank_jobs
-from backend.job_scraper import fetch_jobs
+from resume_parser import parse_resume
+from job_matcher import rank_jobs
+from job_scraper import fetch_jobs
 
 # Configure logging
 logging.basicConfig(
