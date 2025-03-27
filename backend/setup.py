@@ -1,0 +1,42 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="resume_matcher",
+    version="0.1",
+    packages=find_packages(),
+    install_requires=[
+        "fastapi>=0.68.0",
+        "uvicorn>=0.15.0",
+        "python-multipart>=0.0.5",
+        "httpx>=0.19.0",
+        "pdfplumber>=0.7.0",
+        "docx2txt>=0.8",
+        "spacy>=3.0.0",
+        "rtfunicode>=1.1",
+        "nltk>=3.6.0",
+        "scikit-learn>=1.0.0",
+        "pandas>=1.3.0",
+        "numpy>=1.21.0",
+        "beautifulsoup4>=4.10.0",
+        "requests>=2.26.0",
+        "python-json-logger>=2.0.0",
+        "joblib>=1.1.0",
+        "python-dateutil>=2.8.0",
+        "tqdm>=4.62.0",
+        "python-dotenv>=0.19.0"
+    ],
+    python_requires=">=3.8",
+    extras_require={
+        "dev": [
+            "pytest>=7.0.0",
+            "pytest-asyncio>=0.18.0",
+            "black>=21.0",
+            "flake8>=4.0.0"
+        ]
+    },
+    entry_points={
+        "console_scripts": [
+            "resume-matcher=backend.main:main",
+        ],
+    },
+)

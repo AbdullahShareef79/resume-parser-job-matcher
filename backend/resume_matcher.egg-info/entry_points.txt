@@ -1,0 +1,2 @@
+[console_scripts]
+resume-matcher = backend.main:main
